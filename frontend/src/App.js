@@ -35,8 +35,8 @@ const BrowserTab = ({ tab, isActive, onClick, onClose }) => {
         }}
         className="text-gray-400 hover:text-gray-600 ml-1"
       >
-        ×
-      </span>
+        &times;
+      </button>
     </div>
   );
 };
