@@ -1,5 +1,5 @@
-import OrbitDB from 'orbit-db';
-import IPFS from 'ipfs-http-client';
+// Browser-compatible IPFS and OrbitDB implementation
+// Note: Full OrbitDB requires Node.js environment, so we implement a simplified version
 
 class SearchService {
   constructor() {
