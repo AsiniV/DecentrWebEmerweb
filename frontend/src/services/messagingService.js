@@ -164,8 +164,8 @@ class MessagingService {
   // Process received encrypted message
   async processIncomingMessage(messagePacket) {
     try {
-      // Decrypt the message
-      const decryptedData = cryptoService.decryptMessage(messagePacket);
+      // Decrypt the message with enhanced security
+      const decryptedData = enhancedCryptoService.decryptMessage(messagePacket);
       
       if (!decryptedData.verified) {
         console.warn('Received message with failed verification');
