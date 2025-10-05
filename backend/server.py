@@ -565,6 +565,107 @@ async def health_check():
             "timestamp": datetime.now(timezone.utc)
         }
 
+# Browser rendering endpoints
+@api_router.post("/browser/session")
+async def create_browser_session():
+    """Create a new server-side browser session"""
+    try:
+        from services.browser_service import browser_service
+        session_id = await browser_service.create_session()
+        
+        return {
+            "success": True,
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to create browser session: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/browser/{session_id}/navigate")
+async def navigate_browser_session(session_id: str, request: Dict[str, str]):
+    """Navigate browser session to a URL"""
+    try:
+        from services.browser_service import browser_service
+        url = request.get("url")
+        
+        if not url:
+            raise HTTPException(status_code=400, detail="URL is required")
+        
+        result = await browser_service.navigate_to_url(session_id, url)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Navigation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/browser/{session_id}/interact")
+async def interact_with_browser(session_id: str, action: Dict[str, Any]):
+    """Send interaction to browser session"""
+    try:
+        from services.browser_service import browser_service
+        result = await browser_service.interact_with_page(session_id, action)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Interaction failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/browser/{session_id}/content")
+async def get_browser_content(session_id: str):
+    """Get current page content and screenshot"""
+    try:
+        from services.browser_service import browser_service
+        result = await browser_service.get_page_content(session_id)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Content retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/browser/{session_id}/execute")
+async def execute_javascript(session_id: str, request: Dict[str, str]):
+    """Execute JavaScript in browser session"""
+    try:
+        from services.browser_service import browser_service
+        script = request.get("script")
+        
+        if not script:
+            raise HTTPException(status_code=400, detail="Script is required")
+        
+        result = await browser_service.execute_javascript(session_id, script)
+        return result
+        
+    except Exception as e:
+        logger.error(f"JavaScript execution failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/browser/{session_id}")
+async def close_browser_session(session_id: str):
+    """Close browser session"""
+    try:
+        from services.browser_service import browser_service
+        await browser_service.close_session(session_id)
+        
+        return {"success": True}
+        
+    except Exception as e:
+        logger.error(f"Session closure failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/browser/sessions")
+async def list_browser_sessions():
+    """List all active browser sessions"""
+    try:
+        from services.browser_service import browser_service
+        sessions = browser_service.get_all_sessions()
+        
+        return {"sessions": sessions}
+        
+    except Exception as e:
+        logger.error(f"Session listing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Include the router in the main app
 app.include_router(api_router)
 
