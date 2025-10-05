@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ExternalLink, AlertTriangle, Loader2, RefreshCw, Globe } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Loader2, RefreshCw, Globe, Monitor } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { toast } from 'sonner';
+import ServerRenderedViewer from './ServerRenderedViewer';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
