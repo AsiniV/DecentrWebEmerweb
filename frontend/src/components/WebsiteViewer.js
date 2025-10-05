@@ -259,7 +259,12 @@ const WebsiteViewer = ({ url }) => {
     );
   }
 
-  // Success state - show the iframe
+  // Success state - show appropriate viewer
+  if (useServerBrowser) {
+    return <ServerRenderedViewer url={url} />;
+  }
+
+  // Regular iframe or proxy
   return (
     <div className="flex-1 flex flex-col">
       <div className="bg-white border-b px-4 py-2 flex items-center gap-2">
