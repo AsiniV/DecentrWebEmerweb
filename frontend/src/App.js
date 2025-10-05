@@ -56,33 +56,10 @@ const ContentViewer = ({ content, contentType, url, source }) => {
     );
   }
 
-  // For HTTP/HTTPS websites, use iframe for full browser engine support
+  // For HTTP/HTTPS websites, use smart loading with proxy fallback
   if (source === 'http' && (url?.startsWith('http://') || url?.startsWith('https://'))) {
     return (
-      <div className="flex-1 flex flex-col">
-        <div className="bg-white border-b px-4 py-2 flex items-center gap-2">
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            {source?.toUpperCase()}
-          </Badge>
-          <span className="text-sm text-gray-600 truncate">{url}</span>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => window.open(url, '_blank')}
-            className="ml-auto"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </Button>
-        </div>
-        <iframe
-          src={url}
-          className="flex-1 w-full border-0"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
-          title={`Web content: ${url}`}
-          onLoad={() => console.log('Website loaded successfully')}
-          onError={() => console.error('Failed to load website')}
-        />
-      </div>
+      <WebsiteViewer url={url} />
     );
   }
 
