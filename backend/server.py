@@ -601,19 +601,19 @@ async def create_browser_session():
 
 @api_router.post("/browser/{session_id}/navigate")
 async def navigate_browser_session(session_id: str, request: Dict[str, str]):
-    """Navigate browser session to a URL"""
+    """Navigate advanced browser session to a URL with full capabilities"""
     try:
-        from services.browser_service import browser_service
+        from services.advanced_browser_service import advanced_browser_service
         url = request.get("url")
         
         if not url:
             raise HTTPException(status_code=400, detail="URL is required")
         
-        result = await browser_service.navigate_to_url(session_id, url)
+        result = await advanced_browser_service.navigate_to_url(session_id, url)
         return result
         
     except Exception as e:
-        logger.error(f"Navigation failed: {str(e)}")
+        logger.error(f"Advanced navigation failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/browser/{session_id}/interact")
