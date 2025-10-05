@@ -309,18 +309,44 @@ const PrivaChainBrowser = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/search`, {
-        query: query.trim(),
-        search_type: 'hybrid',
+      // Initialize search service if not already done
+      if (!searchService.isInitialized) {
+        toast.info('Initializing decentralized search...');
+        await searchService.initialize();
+      }
+
+      // Perform real decentralized search
+      const results = await searchService.search(query.trim(), {
+        searchType: 'hybrid',
         limit: 20
       });
 
-      setSearchResults(response.data);
+      // Also search backend for additional results
+      try {
+        const backendResponse = await axios.post(`${API}/search`, {
+          query: query.trim(),
+          search_type: 'hybrid',
+          limit: 10
+        });
+        
+        // Combine and deduplicate results
+        const combinedResults = [...results, ...backendResponse.data];
+        const uniqueResults = combinedResults.filter((result, index, self) =>
+          index === self.findIndex(r => r.url === result.url)
+        );
+        
+        setSearchResults(uniqueResults);
+      } catch (backendError) {
+        // If backend fails, use only OrbitDB results
+        console.warn('Backend search failed, using OrbitDB only:', backendError);
+        setSearchResults(results);
+      }
+
       setActiveView('search');
-      toast.success(`Found ${response.data.length} results`);
+      toast.success(`Found ${results.length} decentralized results`);
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Search failed: ' + (error.response?.data?.detail || error.message));
+      toast.error('Search failed: ' + error.message);
     } finally {
       setLoading(false);
     }
