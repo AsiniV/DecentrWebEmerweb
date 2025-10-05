@@ -571,6 +571,16 @@ async def create_browser_session():
     """Create a new server-side browser session"""
     try:
         from services.browser_service import browser_service
+        
+        if not browser_service.is_running:
+            # Try to initialize browser service
+            success = await browser_service.initialize()
+            if not success:
+                raise HTTPException(
+                    status_code=503, 
+                    detail="Browser service unavailable. Playwright/Chromium may not be properly installed."
+                )
+        
         session_id = await browser_service.create_session()
         
         return {
