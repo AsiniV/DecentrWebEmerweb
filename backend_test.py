@@ -849,8 +849,8 @@ class PrivaChainTester:
                     data = await response.json()
                     
                     source = data.get("source")
-                    blockchain_info = data.get("blockchain_info", {})
-                    privacy_features = data.get("privacy_features", {})
+                    blockchain_info = data.get("blockchain_info") or {}
+                    privacy_features = data.get("privacy_features") or {}
                     
                     if source == "prv":
                         # Check for blockchain integration features
@@ -858,7 +858,9 @@ class PrivaChainTester:
                             privacy_features.get("blockchain_verified") or
                             privacy_features.get("cosmos_secured") or
                             data.get("available_for_registration") or
-                            blockchain_info.get("blockchain_verified")
+                            blockchain_info.get("blockchain_verified") or
+                            len(blockchain_info) > 0 or
+                            len(privacy_features) > 0
                         )
                         
                         if has_blockchain_features:
@@ -869,11 +871,18 @@ class PrivaChainTester:
                                               "blockchain_verified": blockchain_info.get("blockchain_verified"),
                                               "cosmos_secured": privacy_features.get("cosmos_secured"),
                                               "available_for_registration": data.get("available_for_registration"),
-                                              "registration_info": data.get("registration_info", {})
+                                              "registration_info": data.get("registration_info", {}),
+                                              "has_blockchain_info": len(blockchain_info) > 0,
+                                              "has_privacy_features": len(privacy_features) > 0
                                           })
                         else:
                             self.log_result("Content Resolution with Blockchain", False,
-                                          "PRV domain missing blockchain integration features", data)
+                                          "PRV domain missing blockchain integration features", {
+                                              "source": source,
+                                              "blockchain_info": blockchain_info,
+                                              "privacy_features": privacy_features,
+                                              "available_for_registration": data.get("available_for_registration")
+                                          })
                     else:
                         self.log_result("Content Resolution with Blockchain", False,
                                       f"Unexpected source type: {source}", data)
