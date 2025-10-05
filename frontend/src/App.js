@@ -255,11 +255,21 @@ const PrivaChainBrowser = () => {
   };
 
   const extractTitle = (content) => {
+    if (!content) return null;
     const titleMatch = content.match(/<title>(.*?)<\/title>/i);
     if (titleMatch) return titleMatch[1];
     const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
     if (h1Match) return h1Match[1].replace(/<[^>]*>/g, '');
     return null;
+  };
+
+  const extractTitleFromUrl = (url) => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname || url.split('/').pop() || 'Web Page';
+    } catch {
+      return url.split('/').pop() || 'Web Page';
+    }
   };
 
   // Tab management
