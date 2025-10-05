@@ -174,6 +174,13 @@ class ContentResolver:
                             "owner": domain_info.get("owner"),
                             "registration_height": domain_info.get("registration_height"),
                             "content_hash": domain_info["ipfs_hash"]
+                        },
+                        "privacy_enabled": True,
+                        "privacy_features": {
+                            "blockchain_verified": True,
+                            "decentralized_dns": True,
+                            "content_encrypted": self.privacy_service.ipfs_encryption.encryption_enabled,
+                            "anonymous_access": True
                         }
                     }
                 else:
