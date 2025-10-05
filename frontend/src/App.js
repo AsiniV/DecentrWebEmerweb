@@ -180,6 +180,10 @@ const PrivaChainBrowser = () => {
     try {
       // For HTTP/HTTPS URLs, we can directly load them in iframe without backend processing
       if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+        // Check if it's a commonly blocked site and warn user
+        const blockedSites = ['google.com', 'youtube.com', 'facebook.com', 'twitter.com', 'instagram.com'];
+        const isKnownBlocked = blockedSites.some(site => trimmedUrl.includes(site));
+        
         // Update tab directly for web content
         setTabs(prevTabs => 
           prevTabs.map(tab => 
@@ -197,7 +201,12 @@ const PrivaChainBrowser = () => {
         );
 
         setAddressBar(trimmedUrl);
-        toast.success('Loading web content...');
+        
+        if (isKnownBlocked) {
+          toast.warning('Note: This site may block embedding. Use "Open in New Tab" if needed.');
+        } else {
+          toast.success('Loading web content...');
+        }
         return;
       }
 
