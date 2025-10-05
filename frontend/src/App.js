@@ -546,35 +546,7 @@ const PrivaChainBrowser = () => {
         )}
 
         {activeView === 'messenger' && (
-          <div className="flex-1 p-6">
-            <Card className="max-w-2xl mx-auto h-full flex flex-col">
-              <CardHeader>
-                <CardTitle>Web3 Messenger</CardTitle>
-                <CardDescription>
-                  Decentralized messaging with E2E encryption (Coming Soon)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <div className="flex-1 bg-gray-50 rounded-lg p-4 mb-4">
-                  <div className="text-center text-gray-500 mt-20">
-                    <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p>Web3 Messenger coming soon!</p>
-                    <p className="text-sm mt-2">Features: E2E encryption, P2P delivery, anonymous identities</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Input 
-                    placeholder="Type a message..."
-                    disabled
-                    className="flex-1"
-                  />
-                  <Button disabled>
-                    Send
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <MessengerView />
         )}
       </div>
       
