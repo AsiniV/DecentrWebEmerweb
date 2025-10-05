@@ -214,7 +214,14 @@ class ContentResolver:
                         "source": "http",
                         "url": str(response.url),  # Use final URL after redirects
                         "status_code": response.status_code,
-                        "headers": dict(response.headers)
+                        "headers": dict(response.headers),
+                        "privacy_enabled": True,
+                        "privacy_features": {
+                            "tor_enabled": private_request['tor_enabled'],
+                            "dpi_bypassed": private_request['dpi_bypassed'],
+                            "anonymized": private_request['anonymized'],
+                            "zk_proof": private_request['zk_proof']['commitment'][:16] + "..."
+                        }
                     }
                 else:
                     raise HTTPException(status_code=response.status_code, detail=f"HTTP fetch failed: {response.status_code}")
