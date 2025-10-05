@@ -1,8 +1,5 @@
-import { createLibp2p } from 'libp2p';
-import { webSockets } from '@libp2p/websockets';
-import { noise } from '@libp2p/noise';
-import { mplex } from '@libp2p/mplex';
-import { bootstrap } from '@libp2p/bootstrap';
+// Browser-compatible P2P messaging implementation
+// Note: Full libp2p requires Node.js, so we implement WebRTC-based P2P for browser
 import { cryptoService } from './cryptoService';
 
 class MessagingService {
