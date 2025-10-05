@@ -455,6 +455,92 @@ async def get_messages(user_id: str):
         logging.error(f"Message retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.get("/proxy")
+async def proxy_website(url: str):
+    """Proxy websites to bypass X-Frame-Options restrictions"""
+    try:
+        if not url.startswith(('http://', 'https://')):
+            raise HTTPException(status_code=400, detail="Invalid URL scheme")
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        }
+        
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                content = response.text
+                
+                # Remove X-Frame-Options and CSP headers that block iframe embedding
+                content = modify_content_for_iframe(content, url)
+                
+                return {
+                    "content": content,
+                    "content_type": "text/html",
+                    "status_code": response.status_code,
+                    "proxied": True
+                }
+            else:
+                raise HTTPException(status_code=response.status_code, detail="Failed to fetch website")
+                
+    except Exception as e:
+        logging.error(f"Proxy error for {url}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Proxy error: {str(e)}")
+
+
+def modify_content_for_iframe(content: str, base_url: str) -> str:
+    """Modify HTML content to work better in iframe"""
+    try:
+        from urllib.parse import urljoin, urlparse
+        
+        # Remove or modify problematic headers in meta tags
+        content = content.replace('X-Frame-Options', 'X-Frame-Options-Disabled')
+        content = content.replace('frame-ancestors', 'frame-ancestors-disabled')
+        
+        # Fix relative URLs to absolute URLs
+        base_domain = urlparse(base_url).netloc
+        
+        # Basic relative URL fixing (this could be enhanced)
+        content = content.replace('href="/', f'href="https://{base_domain}/')
+        content = content.replace('src="/', f'src="https://{base_domain}/')
+        content = content.replace("href='/", f"href='https://{base_domain}/")
+        content = content.replace("src='/", f"src='https://{base_domain}/")
+        
+        # Add base tag for better resource loading
+        base_tag = f'<base href="{base_url}">'
+        if '<head>' in content:
+            content = content.replace('<head>', f'<head>{base_tag}')
+        
+        # Add iframe-friendly meta tags
+        iframe_meta = '''
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow-x: auto;
+        }
+        </style>
+        '''
+        
+        if '<head>' in content:
+            content = content.replace('<head>', f'<head>{iframe_meta}')
+        
+        return content
+        
+    except Exception as e:
+        logging.error(f"Content modification error: {str(e)}")
+        return content
+
+
 @api_router.get("/status/health")
 async def health_check():
     """Health check endpoint"""
