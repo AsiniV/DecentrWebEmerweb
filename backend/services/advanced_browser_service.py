@@ -149,6 +149,9 @@ class AdvancedBrowserService:
                 'disable_capture': False
             }
             
+            # Set Chrome executable path
+            chrome_options.binary_location = '/usr/bin/chromium'
+            
             # Create driver with wire capabilities
             driver = wire_webdriver.Chrome(options=chrome_options, seleniumwire_options=wireOptions)
             
