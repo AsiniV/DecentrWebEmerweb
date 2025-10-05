@@ -226,6 +226,12 @@ class ContentResolver:
 # Initialize services
 content_resolver = ContentResolver()
 
+# Initialize Cosmos service on startup
+@app.on_event("startup")
+async def startup_event():
+    from services.cosmos_service import cosmos_service
+    await cosmos_service.initialize()
+
 # Routes
 @api_router.get("/")
 async def root():
