@@ -275,14 +275,14 @@ class MessagingService {
     return conversations;
   }
 
-  // Add contact for messaging
-  addContact(contactId, publicKey) {
-    return cryptoService.addContact(contactId, publicKey);
+  // Add contact for messaging with enhanced verification
+  addContact(contactId, publicKey, signingKey = null) {
+    return enhancedCryptoService.addContact(contactId, publicKey, signingKey);
   }
 
   // Generate conversation ID
   getConversationId(contactId) {
-    const myPublicKey = cryptoService.getPublicKey();
+    const myPublicKey = enhancedCryptoService.getPublicKey();
     const keys = [myPublicKey, contactId].sort();
     return keys.join('_');
   }
