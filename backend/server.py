@@ -565,31 +565,38 @@ async def health_check():
             "timestamp": datetime.now(timezone.utc)
         }
 
-# Browser rendering endpoints
+# Advanced Browser rendering endpoints  
 @api_router.post("/browser/session")
 async def create_browser_session():
-    """Create a new server-side browser session"""
+    """Create a new advanced browser session with full capabilities"""
     try:
-        from services.browser_service import browser_service
+        from services.advanced_browser_service import advanced_browser_service
         
-        if not browser_service.is_running:
-            # Try to initialize browser service
-            success = await browser_service.initialize()
+        if not advanced_browser_service.is_running:
+            # Initialize advanced browser service
+            success = await advanced_browser_service.initialize()
             if not success:
                 raise HTTPException(
                     status_code=503, 
-                    detail="Browser service unavailable. Playwright/Chromium may not be properly installed."
+                    detail="Advanced browser service unavailable."
                 )
         
-        session_id = await browser_service.create_session()
+        session_id = await advanced_browser_service.create_session(enable_dpi_bypass=True)
         
         return {
             "success": True,
-            "session_id": session_id
+            "session_id": session_id,
+            "capabilities": [
+                "full_javascript",
+                "webgl_webassembly", 
+                "oauth_popups",
+                "dpi_bypass",
+                "canvas_rendering"
+            ]
         }
         
     except Exception as e:
-        logger.error(f"Failed to create browser session: {str(e)}")
+        logger.error(f"Failed to create advanced browser session: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/browser/{session_id}/navigate")
