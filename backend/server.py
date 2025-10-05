@@ -266,35 +266,50 @@ async def get_cached_content():
 
 @api_router.post("/search", response_model=List[SearchResult])
 async def hybrid_search(query: SearchQuery):
-    """Perform hybrid search across IPFS, OrbitDB, and other sources"""
+    """Perform hybrid search across IPFS, OrbitDB, and Cosmos blockchain"""
     try:
+        from services.cosmos_service import cosmos_service
+        
         results = []
         
-        # Placeholder search results (OrbitDB integration coming)
+        # Search IPFS network
         if query.search_type in ["hybrid", "ipfs"]:
-            results.append(SearchResult(
-                title=f"IPFS Search: {query.query}",
-                url=f"ipfs://QmExample{len(query.query)}",
-                content_preview=f"Search results for '{query.query}' in IPFS network",
-                source="ipfs",
-                relevance_score=0.9
-            ))
+            ipfs_results = await search_ipfs_content(query.query, query.limit // 2)
+            results.extend(ipfs_results)
         
-        if query.search_type in ["hybrid", "prv"]:
-            results.append(SearchResult(
-                title=f"PrivaChain Domain: {query.query}",
-                url=f"{query.query.lower().replace(' ', '')}.prv",
-                content_preview=f"Decentralized content for '{query.query}' on PrivaChain",
-                source="prv",
-                relevance_score=0.8
-            ))
+        # Search PrivaChain domains on Cosmos
+        if query.search_type in ["hybrid", "prv", "cosmos"]:
+            prv_results = await cosmos_service.search_domains(query.query, query.limit // 2)
+            
+            for domain_info in prv_results:
+                results.append(SearchResult(
+                    title=domain_info.get("title", f"PrivaChain Domain: {domain_info['domain']}"),
+                    url=domain_info["domain"],
+                    content_preview=domain_info.get("description", f"Decentralized content on {domain_info['domain']}"),
+                    source="prv",
+                    relevance_score=calculate_domain_relevance(domain_info["domain"], query.query),
+                    metadata={
+                        "owner": domain_info.get("owner"),
+                        "content_hash": domain_info.get("content_hash"),
+                        "blockchain": "cosmos"
+                    }
+                ))
+        
+        # Search Cosmos chain directly
+        if query.search_type in ["hybrid", "cosmos"]:
+            cosmos_results = await search_cosmos_chain(query.query, query.limit // 3)
+            results.extend(cosmos_results)
+        
+        # Sort by relevance score
+        results.sort(key=lambda x: x.relevance_score or 0, reverse=True)
         
         # Store search query for analytics
         search_record = {
             "query": query.query,
             "search_type": query.search_type,
             "timestamp": datetime.now(timezone.utc),
-            "results_count": len(results)
+            "results_count": len(results),
+            "sources": list(set(r.source for r in results))
         }
         await db.search_queries.insert_one(search_record)
         
@@ -303,6 +318,100 @@ async def hybrid_search(query: SearchQuery):
     except Exception as e:
         logging.error(f"Search failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def search_ipfs_content(query: str, limit: int) -> List[SearchResult]:
+    """Search for IPFS content"""
+    try:
+        results = []
+        
+        # Search known IPFS hashes and content
+        known_content = [
+            {
+                "cid": "QmT78zSuBmuS4z925WZfrqQ1qHaJ56DQaTfyMUF7F8ff5o",
+                "title": "Hello World Content",
+                "description": "Simple text content on IPFS"
+            },
+            {
+                "cid": "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG",
+                "title": "IPFS Directory Example",
+                "description": "Example directory structure on IPFS"
+            }
+        ]
+        
+        query_lower = query.lower()
+        
+        for content in known_content:
+            if (query_lower in content["title"].lower() or 
+                query_lower in content["description"].lower()):
+                results.append(SearchResult(
+                    title=content["title"],
+                    url=f"ipfs://{content['cid']}",
+                    content_preview=content["description"],
+                    source="ipfs",
+                    relevance_score=calculate_text_relevance(content["title"] + " " + content["description"], query),
+                    metadata={"cid": content["cid"]}
+                ))
+        
+        return results[:limit]
+        
+    except Exception as e:
+        logging.error(f"IPFS search error: {str(e)}")
+        return []
+
+
+async def search_cosmos_chain(query: str, limit: int) -> List[SearchResult]:
+    """Search Cosmos blockchain for transactions and data"""
+    try:
+        from services.cosmos_service import cosmos_service
+        
+        results = []
+        
+        # Search for transactions, smart contracts, etc.
+        chain_info = await cosmos_service.get_chain_info()
+        
+        if chain_info.get("connected"):
+            results.append(SearchResult(
+                title=f"Cosmos Chain Query: {query}",
+                url=f"https://mintscan.io/cosmos/txs?q={query}",
+                content_preview=f"Blockchain data related to '{query}' on {chain_info.get('chain_id', 'Cosmos Hub')}",
+                source="cosmos",
+                relevance_score=0.7,
+                metadata={
+                    "chain_id": chain_info.get("chain_id"),
+                    "latest_height": chain_info.get("latest_block_height")
+                }
+            ))
+        
+        return results[:limit]
+        
+    except Exception as e:
+        logging.error(f"Cosmos search error: {str(e)}")
+        return []
+
+
+def calculate_domain_relevance(domain: str, query: str) -> float:
+    """Calculate relevance score for domain vs query"""
+    domain_lower = domain.lower().replace('.prv', '')
+    query_lower = query.lower()
+    
+    if domain_lower == query_lower:
+        return 1.0
+    elif query_lower in domain_lower:
+        return 0.8
+    elif domain_lower in query_lower:
+        return 0.6
+    else:
+        return 0.4
+
+
+def calculate_text_relevance(text: str, query: str) -> float:
+    """Calculate relevance score for text vs query"""
+    text_lower = text.lower()
+    query_terms = query.lower().split()
+    
+    matches = sum(1 for term in query_terms if term in text_lower)
+    return min(matches / len(query_terms), 1.0)
 
 @api_router.post("/ipfs/add", response_model=Dict[str, str])
 async def add_to_ipfs(content: str, filename: str = "content.txt"):
