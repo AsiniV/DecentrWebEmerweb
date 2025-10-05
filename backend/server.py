@@ -598,6 +598,27 @@ async def health_check():
             "timestamp": datetime.now(timezone.utc)
         }
 
+@api_router.get("/privacy/status")
+async def get_privacy_status():
+    """Get comprehensive privacy status"""
+    try:
+        privacy_status = content_resolver.get_privacy_status()
+        return {
+            "privacy_by_default": True,
+            "status": privacy_status,
+            "features_enabled": [
+                "TOR routing (when available)",
+                "DPI bypass with traffic obfuscation", 
+                "Zero-Knowledge proofs for queries",
+                "IPFS content encryption",
+                "Anonymous identity generation",
+                "Request timing obfuscation"
+            ]
+        }
+    except Exception as e:
+        logging.error(f"Privacy status check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Advanced Browser rendering endpoints  
 @api_router.post("/browser/session")
 async def create_browser_session():
