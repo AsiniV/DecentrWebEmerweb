@@ -327,20 +327,29 @@ const PrivaChainBrowser = () => {
   // Handle address bar submission
   const handleAddressSubmit = (e) => {
     e.preventDefault();
-    if (addressBar.includes(' ') || (!addressBar.includes('://') && !addressBar.includes('.'))) {
-      // Treat as search query
-      performSearch(addressBar);
-    } else {
-      // Treat as URL
-      let url = addressBar;
-      if (!url.includes('://')) {
-        if (url.endsWith('.prv')) {
-          url = `https://${url}`; // For .prv domains
-        } else {
-          url = `https://${url}`; // Default to HTTPS
+    const trimmedAddress = addressBar?.trim() || '';
+    
+    if (!trimmedAddress) return;
+    
+    try {
+      if (trimmedAddress.includes(' ') || (!trimmedAddress.includes('://') && !trimmedAddress.includes('.'))) {
+        // Treat as search query
+        performSearch(trimmedAddress);
+      } else {
+        // Treat as URL
+        let url = trimmedAddress;
+        if (!url.includes('://')) {
+          if (url.endsWith('.prv')) {
+            url = `https://${url}`; // For .prv domains
+          } else {
+            url = `https://${url}`; // Default to HTTPS
+          }
         }
+        navigateToUrl(url);
       }
-      navigateToUrl(url);
+    } catch (error) {
+      console.error('Address submit error:', error);
+      toast.error('Invalid address or search query');
     }
   };
 
