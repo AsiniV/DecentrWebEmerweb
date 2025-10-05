@@ -188,16 +188,13 @@ class ContentResolver:
             raise HTTPException(status_code=500, detail=f"Resolution error: {str(e)}")
     
     async def fetch_http_content(self, url: str) -> Dict[str, Any]:
-        """Fetch HTTP content with DPI bypass techniques"""
+        """Fetch HTTP content with privacy features enabled by default"""
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1'
-            }
+            # Use privacy service for enhanced protection
+            private_request = await self.privacy_service.create_private_request(url, 'GET')
+            
+            # Use privacy-enhanced headers and session
+            headers = private_request['headers']
             
             async with httpx.AsyncClient(
                 follow_redirects=True,
