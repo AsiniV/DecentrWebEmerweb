@@ -659,15 +659,15 @@ async def execute_javascript(session_id: str, request: Dict[str, str]):
 
 @api_router.delete("/browser/{session_id}")
 async def close_browser_session(session_id: str):
-    """Close browser session"""
+    """Close advanced browser session"""
     try:
-        from services.browser_service import browser_service
-        await browser_service.close_session(session_id)
+        from services.advanced_browser_service import advanced_browser_service
+        await advanced_browser_service.close_session(session_id)
         
         return {"success": True}
         
     except Exception as e:
-        logger.error(f"Session closure failed: {str(e)}")
+        logger.error(f"Advanced session closure failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/browser/sessions")
