@@ -79,11 +79,6 @@ class IPFSService:
     async def get_content(self, cid: str) -> Dict[str, Any]:
         """Retrieve content from IPFS using the provided API"""
         try:
-            headers = {
-                "Authorization": f"Basic {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
             # Try to get content via IPFS API
             async with httpx.AsyncClient() as client:
                 # First try to get via gateway
