@@ -85,6 +85,12 @@ class BrowserRenderingService:
     async def create_session(self) -> str:
         """Create a new browser session"""
         try:
+            if not self.browser or not self.is_running:
+                # Try to reinitialize if browser is not available
+                await self.initialize()
+                if not self.browser:
+                    raise Exception("Browser service not available")
+            
             session_id = str(uuid.uuid4())
             
             # Create new browser context
