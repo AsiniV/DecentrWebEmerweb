@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Backend API base URL from frontend/.env
-BASE_URL = "http://localhost:8001/api"
+BASE_URL = "https://p2p-browser.preview.emergentagent.com/api"
 
 class PrivaChainTester:
     def __init__(self):
