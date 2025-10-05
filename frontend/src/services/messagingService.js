@@ -251,10 +251,10 @@ class MessagingService {
     return this.messages.get(conversationId) || [];
   }
 
-  // Get all conversations
+  // Get all conversations with privacy status
   getConversations() {
     const conversations = [];
-    const contacts = cryptoService.getContacts();
+    const contacts = enhancedCryptoService.getContacts();
     
     for (const contact of contacts) {
       const messages = this.getMessages(contact.id);
