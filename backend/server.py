@@ -257,13 +257,22 @@ async def startup_event():
     from services.working_browser_service import working_browser_service
     from services.privacy_service import privacy_service
     
+    logger.info("🚀 Starting PrivaChain Decentral with Cosmos blockchain integration...")
+    
     # Initialize privacy services first (they're foundational)
     privacy_initialized = await privacy_service.initialize()
     if privacy_initialized:
         logger.info("✅ ALL PRIVACY FEATURES ENABLED BY DEFAULT")
     
-    await cosmos_service.initialize()
+    # Initialize Cosmos blockchain service with developer-paid transactions
+    cosmos_initialized = await cosmos_service.initialize()
+    if cosmos_initialized:
+        logger.info("✅ COSMOS BLOCKCHAIN INTEGRATION ACTIVE - Developer-paid transactions enabled")
+        logger.info("✅ ALL TRANSACTIONS GO THROUGH COSMOS BLOCKCHAIN FOR MAXIMUM SECURITY")
+    
     await working_browser_service.initialize()
+    
+    logger.info("🎉 PrivaChain Decentral startup complete - Web2 UX with blockchain security!")
 
 # Routes
 @api_router.get("/")
