@@ -723,5 +723,5 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
-    from services.browser_service import browser_service
-    await browser_service.stop()
+    from services.advanced_browser_service import advanced_browser_service
+    await advanced_browser_service.stop()
