@@ -642,16 +642,26 @@ class PrivaChainTester:
             self.log_result("Health Check with Privacy Services", False, f"Error: {str(e)}")
     
     async def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting PrivaChain Decentral Backend API Tests")
-        print("=" * 60)
+        """Run all backend tests including comprehensive privacy features"""
+        print("🚀 Starting PrivaChain Decentral Backend API Tests with Privacy Features")
+        print("=" * 70)
         print()
         
         # Basic connectivity tests
         await self.test_health_check()
         await self.test_root_endpoint()
         
-        # Content resolution tests
+        # PRIVACY FEATURE TESTS (NEW)
+        print("🔒 Testing Privacy Features...")
+        await self.test_privacy_status()
+        await self.test_health_check_privacy_services()
+        await self.test_enhanced_content_resolution_privacy()
+        await self.test_privacy_enhanced_search()
+        await self.test_e2e_encrypted_messaging()
+        await self.test_encrypted_ipfs_storage()
+        
+        # Original functionality tests
+        print("🌐 Testing Core Functionality...")
         await self.test_content_resolution_http()
         await self.test_content_resolution_ipfs()
         await self.test_content_resolution_prv_domain()
