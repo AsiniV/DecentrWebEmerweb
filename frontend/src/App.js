@@ -435,6 +435,7 @@ const PrivaChainBrowser = () => {
               content={activeTab?.content}
               contentType={activeTab?.contentType}
               url={activeTab?.url}
+              source={activeTab?.source}
             />
           </>
         )}
