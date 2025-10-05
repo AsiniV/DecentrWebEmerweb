@@ -1,24 +1,29 @@
 """
-Real Cosmos SDK integration for PrivaChain .prv domain resolution
+Enhanced Cosmos SDK integration for PrivaChain with developer-paid transactions
+Implements transparent blockchain operations for .prv domains, content storage, and messaging
 """
 
 import asyncio
 import json
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 import httpx
-from web3 import Web3
-from coincurve import PrivateKey, PublicKey
 import base64
 import hashlib
+import os
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
 class CosmosService:
-    def __init__(self, rpc_endpoint: str = "https://rpc.cosmos.network", chain_id: str = "cosmoshub-4"):
-        self.rpc_endpoint = rpc_endpoint
-        self.chain_id = chain_id
+    def __init__(self, rpc_endpoint: str = None, chain_id: str = None):
+        # Use testnet configuration by default
+        self.rpc_endpoint = rpc_endpoint or "https://rpc.sentry-01.theta-testnet.polypore.xyz:443"
+        self.chain_id = chain_id or "theta-testnet-001"
         self.client = None
+        self.developer_wallet_key = "df449cf7393c69c5ffc164a3fb4f1095f1b923e61762624aa0351e38de9fb306"
+        self.developer_address = None
+        self.transaction_count = 0
         
     async def initialize(self):
         """Initialize Cosmos connection"""
