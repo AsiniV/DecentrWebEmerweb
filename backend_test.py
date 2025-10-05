@@ -182,12 +182,13 @@ class PrivaChainTester:
         try:
             test_content = "Hello from PrivaChain Decentral Browser! This is test content for IPFS."
             
-            # Using form data for IPFS add endpoint
-            data = aiohttp.FormData()
-            data.add_field('content', test_content)
-            data.add_field('filename', 'test_content.txt')
+            # Using query parameters for IPFS add endpoint
+            params = {
+                'content': test_content,
+                'filename': 'test_content.txt'
+            }
             
-            async with self.session.post(f"{BASE_URL}/ipfs/add", data=data) as response:
+            async with self.session.post(f"{BASE_URL}/ipfs/add", params=params) as response:
                 if response.status == 200:
                     result = await response.json()
                     if result.get("cid") and result.get("url"):
