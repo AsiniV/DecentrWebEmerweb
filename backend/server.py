@@ -348,13 +348,16 @@ async def hybrid_search(query: SearchQuery):
         # Sort by relevance score
         results.sort(key=lambda x: x.relevance_score or 0, reverse=True)
         
-        # Store search query for analytics
+        # Store anonymized search analytics with ZK proof
         search_record = {
-            "query": query.query,
+            "query_hash": hashlib.sha256(query.query.encode()).hexdigest(),  # Store hash, not actual query
             "search_type": query.search_type,
             "timestamp": datetime.now(timezone.utc),
             "results_count": len(results),
-            "sources": list(set(r.source for r in results))
+            "sources": list(set(r.source for r in results)),
+            "zk_proof_commitment": zk_proof.get('commitment'),
+            "privacy_enabled": True,
+            "anonymous_query": True
         }
         await db.search_queries.insert_one(search_record)
         
