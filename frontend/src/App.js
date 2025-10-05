@@ -195,9 +195,35 @@ const PrivaChainBrowser = () => {
     if (!url.trim()) return;
 
     setLoading(true);
+    const trimmedUrl = url.trim();
+    
     try {
+      // For HTTP/HTTPS URLs, we can directly load them in iframe without backend processing
+      if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+        // Update tab directly for web content
+        setTabs(prevTabs => 
+          prevTabs.map(tab => 
+            tab.id === activeTabId 
+              ? { 
+                  ...tab, 
+                  url: trimmedUrl, 
+                  content: '', // No content needed for iframe
+                  contentType: 'text/html',
+                  source: 'http',
+                  title: extractTitleFromUrl(trimmedUrl) || 'Web Page'
+                }
+              : tab
+          )
+        );
+
+        setAddressBar(trimmedUrl);
+        toast.success('Loading web content...');
+        return;
+      }
+
+      // For IPFS and .prv content, use the backend resolver
       const response = await axios.post(`${API}/content/resolve`, {
-        url: url.trim()
+        url: trimmedUrl
       });
 
       const { content, content_type, source } = response.data;
@@ -208,17 +234,17 @@ const PrivaChainBrowser = () => {
           tab.id === activeTabId 
             ? { 
                 ...tab, 
-                url: url.trim(), 
+                url: trimmedUrl, 
                 content, 
                 contentType: content_type,
                 source,
-                title: extractTitle(content) || url.split('/').pop() || 'Untitled'
+                title: extractTitle(content) || extractTitleFromUrl(trimmedUrl) || 'Untitled'
               }
             : tab
         )
       );
 
-      setAddressBar(url.trim());
+      setAddressBar(trimmedUrl);
       toast.success(`Content loaded from ${source.toUpperCase()}`);
     } catch (error) {
       console.error('Navigation error:', error);
