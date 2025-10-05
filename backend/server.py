@@ -618,14 +618,14 @@ async def navigate_browser_session(session_id: str, request: Dict[str, str]):
 
 @api_router.post("/browser/{session_id}/interact")
 async def interact_with_browser(session_id: str, action: Dict[str, Any]):
-    """Send interaction to browser session"""
+    """Send advanced interaction to browser session"""
     try:
-        from services.browser_service import browser_service
-        result = await browser_service.interact_with_page(session_id, action)
+        from services.advanced_browser_service import advanced_browser_service
+        result = await advanced_browser_service.interact_with_page(session_id, action)
         return result
         
     except Exception as e:
-        logger.error(f"Interaction failed: {str(e)}")
+        logger.error(f"Advanced interaction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.get("/browser/{session_id}/content")
