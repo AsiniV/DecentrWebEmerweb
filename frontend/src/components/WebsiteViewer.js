@@ -12,6 +12,7 @@ const WebsiteViewer = ({ url }) => {
   const [loadingState, setLoadingState] = useState('loading'); // loading, success, blocked, error
   const [proxyUrl, setProxyUrl] = useState('');
   const [showProxy, setShowProxy] = useState(false);
+  const [useServerBrowser, setUseServerBrowser] = useState(false);
   const iframeRef = useRef(null);
 
   useEffect(() => {
