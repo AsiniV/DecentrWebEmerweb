@@ -372,6 +372,17 @@ class MessagingService {
   async stop() {
     if (this.libp2p) {
       await this.libp2p.stop();
+      
+      // Close all peer connections
+      for (const [peerId, connection] of this.peerConnections) {
+        connection.close();
+      }
+      this.peerConnections.clear();
+      
+      if (this.signallingService) {
+        await this.signallingService.disconnect();
+      }
+      
       this.isOnline = false;
       this.notifyStatusListeners({ online: false });
     }
