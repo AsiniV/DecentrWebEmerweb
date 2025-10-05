@@ -46,6 +46,8 @@ class ContentResponse(BaseModel):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source: str  # 'ipfs', 'http', 'prv'
     metadata: Optional[Dict[str, Any]] = None
+    privacy_enabled: Optional[bool] = False
+    privacy_features: Optional[Dict[str, Any]] = None
 
 class SearchQuery(BaseModel):
     query: str
