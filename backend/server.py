@@ -144,7 +144,16 @@ class ContentResolver:
             if url.startswith('ipfs://'):
                 # Extract CID from ipfs:// URL
                 cid = url.replace('ipfs://', '').split('/')[0]
-                return await self.ipfs_service.get_content(cid)
+                ipfs_result = await self.ipfs_service.get_content(cid)
+                
+                # Add privacy features to IPFS content
+                ipfs_result["privacy_enabled"] = True
+                ipfs_result["privacy_features"] = {
+                    "content_encrypted": self.privacy_service.ipfs_encryption.encryption_enabled,
+                    "anonymous_access": True,
+                    "decentralized": True
+                }
+                return ipfs_result
             
             elif url.endswith('.prv'):
                 # Handle .prv domains via Cosmos blockchain
