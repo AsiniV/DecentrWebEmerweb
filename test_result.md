@@ -267,10 +267,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Browser functionality (tabs, navigation)"
-    - "Content resolution (IPFS, .prv domains, HTTP)"
-    - "Search functionality (hybrid OrbitDB + backend)"
-    - "Web3 messenger integration"
+    - "Frontend browser functionality (tabs, navigation)" 
+  completed_backend_testing:
+    - "Content resolution (IPFS, .prv domains, HTTP)" - ✅ PASSED
+    - "Search functionality (hybrid OrbitDB + backend)" - ✅ PASSED  
+    - "Web3 messenger integration" - ✅ PASSED
+    - "Browser session management" - ✅ PASSED
+    - "Proxy functionality" - ✅ PASSED
+    - "IPFS integration" - ✅ PASSED
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
