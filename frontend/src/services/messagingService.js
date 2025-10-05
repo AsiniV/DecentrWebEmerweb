@@ -1,6 +1,5 @@
-// Browser-compatible P2P messaging implementation
-// Note: Full libp2p requires Node.js, so we implement WebRTC-based P2P for browser
-import { cryptoService } from './cryptoService';
+// Enhanced P2P messaging with full privacy features
+import { enhancedCryptoService } from './enhancedCryptoService';
 
 class MessagingService {
   constructor() {
