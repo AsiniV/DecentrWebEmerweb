@@ -358,14 +358,24 @@ class MessagingService {
     }
   }
 
-  // Get current status
+  // Get current status with enhanced privacy information
   getStatus() {
+    const privacyStatus = enhancedCryptoService.getPrivacyStatus();
     return {
       online: this.isOnline,
       peerId: this.libp2p?.peerId?.toString(),
-      publicKey: cryptoService.getPublicKey(),
-      contactCount: cryptoService.getContacts().length
+      publicKey: enhancedCryptoService.getPublicKey(),
+      signingPublicKey: enhancedCryptoService.getSigningPublicKey(),
+      contactCount: enhancedCryptoService.getContacts().length,
+      privacy: privacyStatus,
+      securityLevel: 'maximum',
+      encryption: 'double_layer_forward_secrecy'
     };
+  }
+
+  // Get comprehensive privacy report  
+  getPrivacyReport() {
+    return enhancedCryptoService.generatePrivacyReport();
   }
 
   // Stop messaging service
