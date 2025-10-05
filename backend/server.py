@@ -145,13 +145,34 @@ class ContentResolver:
                 return await self.ipfs_service.get_content(cid)
             
             elif url.endswith('.prv'):
-                # Handle .prv domains (placeholder for Cosmos integration)
-                return {
-                    "content": "<h1>PrivaChain Domain</h1><p>This is a .prv domain placeholder. Cosmos integration coming soon!</p>",
-                    "content_type": "text/html",
-                    "source": "prv",
-                    "domain": url
-                }
+                # Handle .prv domains via Cosmos blockchain
+                from services.cosmos_service import cosmos_service
+                
+                domain_info = await cosmos_service.resolve_prv_domain(url)
+                
+                if domain_info and domain_info.get("ipfs_hash"):
+                    # Fetch content from IPFS using resolved hash
+                    ipfs_content = await self.ipfs_service.get_content(domain_info["ipfs_hash"])
+                    
+                    return {
+                        "content": ipfs_content["content"],
+                        "content_type": ipfs_content["content_type"],
+                        "source": "prv",
+                        "domain": url,
+                        "blockchain_info": {
+                            "owner": domain_info.get("owner"),
+                            "registration_height": domain_info.get("registration_height"),
+                            "content_hash": domain_info["ipfs_hash"]
+                        }
+                    }
+                else:
+                    return {
+                        "content": f"<h1>PrivaChain Domain Not Found</h1><p>The domain '{url}' is not registered on the PrivaChain network.</p><p>You can register this domain on the Cosmos blockchain to point to your IPFS content.</p>",
+                        "content_type": "text/html",
+                        "source": "prv",
+                        "domain": url,
+                        "error": "domain_not_found"
+                    }
             
             elif url.startswith('http://') or url.startswith('https://'):
                 # Handle regular HTTP requests with DPI bypass
