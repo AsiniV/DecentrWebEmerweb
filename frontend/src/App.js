@@ -352,9 +352,9 @@ const PrivaChainBrowser = () => {
   useEffect(() => {
     // Update address bar when active tab changes
     if (activeTab) {
-      setAddressBar(activeTab.url);
+      setAddressBar(activeTab.url || '');
     }
-  }, [activeTabId]);
+  }, [activeTabId, activeTab]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
