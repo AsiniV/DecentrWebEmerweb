@@ -280,7 +280,9 @@ async def resolve_content(request: ContentRequest):
             content=result["content"],
             content_type=result["content_type"],
             source=result["source"],
-            metadata=result.get("metadata")
+            metadata=result.get("metadata"),
+            privacy_enabled=result.get("privacy_enabled", False),
+            privacy_features=result.get("privacy_features")
         )
         
         # Store in database for caching
