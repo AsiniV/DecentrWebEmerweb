@@ -85,8 +85,8 @@ class MessagingService {
     }
 
     try {
-      // Encrypt the message
-      const encryptedData = cryptoService.encryptMessage(message, contactId);
+      // Encrypt the message with enhanced privacy features
+      const encryptedData = enhancedCryptoService.encryptMessage(message, contactId);
       
       const messagePacket = {
         id: this.generateMessageId(),
