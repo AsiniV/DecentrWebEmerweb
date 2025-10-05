@@ -600,19 +600,19 @@ async def create_browser_session():
 
 @api_router.post("/browser/{session_id}/navigate")
 async def navigate_browser_session(session_id: str, request: Dict[str, str]):
-    """Navigate advanced browser session to a URL with full capabilities"""
+    """Navigate working browser session to ANY URL with multiple fallback methods"""
     try:
-        from services.advanced_browser_service import advanced_browser_service
+        from services.working_browser_service import working_browser_service
         url = request.get("url")
         
         if not url:
             raise HTTPException(status_code=400, detail="URL is required")
         
-        result = await advanced_browser_service.navigate_to_url(session_id, url)
+        result = await working_browser_service.navigate_to_url(session_id, url)
         return result
         
     except Exception as e:
-        logger.error(f"Advanced navigation failed: {str(e)}")
+        logger.error(f"Working browser navigation failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/browser/{session_id}/interact")
