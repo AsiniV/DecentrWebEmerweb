@@ -641,6 +641,248 @@ class PrivaChainTester:
         except Exception as e:
             self.log_result("Health Check with Privacy Services", False, f"Error: {str(e)}")
     
+    # NEW BLOCKCHAIN INTEGRATION TESTS
+    async def test_blockchain_status(self):
+        """Test Cosmos blockchain integration status"""
+        try:
+            async with self.session.get(f"{BASE_URL}/blockchain/status") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    blockchain_active = data.get("blockchain_active", False)
+                    developer_wallet = data.get("developer_wallet", {})
+                    transaction_info = data.get("transaction_info", {})
+                    
+                    if blockchain_active and developer_wallet.get("pays_all_fees"):
+                        self.log_result("Blockchain Status", True,
+                                      "Cosmos blockchain integration active with developer-paid transactions", {
+                                          "blockchain_active": blockchain_active,
+                                          "network": data.get("network"),
+                                          "chain_id": data.get("chain_id"),
+                                          "developer_pays_fees": developer_wallet.get("pays_all_fees"),
+                                          "user_experience": transaction_info.get("user_experience"),
+                                          "total_transactions": transaction_info.get("total_processed", 0)
+                                      })
+                    else:
+                        self.log_result("Blockchain Status", False,
+                                      "Blockchain integration not properly configured", data)
+                else:
+                    error_text = await response.text()
+                    self.log_result("Blockchain Status", False, f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            self.log_result("Blockchain Status", False, f"Error: {str(e)}")
+    
+    async def test_blockchain_domain_registration(self):
+        """Test .prv domain registration on Cosmos blockchain"""
+        try:
+            domain_data = {
+                "domain_name": "test-domain.prv",
+                "owner_email": "test@privachain.com",
+                "content_hash": "QmTestContentHash123456789",
+                "metadata": {"title": "Test Domain"}
+            }
+            
+            async with self.session.post(f"{BASE_URL}/blockchain/domains/register", json=domain_data) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    
+                    success = result.get("success", False)
+                    blockchain_tx = result.get("blockchain_tx")
+                    fee_info = result.get("fee_info", {})
+                    
+                    if success and blockchain_tx and fee_info.get("paid_by") == "developer":
+                        self.log_result("Blockchain Domain Registration", True,
+                                      "Domain registered on Cosmos blockchain with developer-paid fees", {
+                                          "domain_name": result.get("domain_name"),
+                                          "owner_email": result.get("owner_email"),
+                                          "blockchain_tx": blockchain_tx,
+                                          "block_height": result.get("block_height"),
+                                          "user_cost": fee_info.get("user_cost"),
+                                          "paid_by": fee_info.get("paid_by"),
+                                          "access_url": result.get("access_url")
+                                      })
+                    else:
+                        self.log_result("Blockchain Domain Registration", False,
+                                      "Domain registration failed or incorrect fee model", result)
+                else:
+                    error_text = await response.text()
+                    self.log_result("Blockchain Domain Registration", False, f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            self.log_result("Blockchain Domain Registration", False, f"Error: {str(e)}")
+    
+    async def test_blockchain_content_upload(self):
+        """Test content upload to blockchain with IPFS integration"""
+        try:
+            content_data = {
+                "content": "This is test content for blockchain verification",
+                "content_type": "text/plain",
+                "owner_email": "content@privachain.com",
+                "encryption_enabled": True
+            }
+            
+            async with self.session.post(f"{BASE_URL}/blockchain/content/upload", json=content_data) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    
+                    success = result.get("success", False)
+                    blockchain_tx = result.get("blockchain_tx")
+                    ipfs_hash = result.get("ipfs_hash")
+                    fee_info = result.get("fee_info", {})
+                    
+                    if success and blockchain_tx and ipfs_hash and fee_info.get("user_cost") == "FREE":
+                        self.log_result("Blockchain Content Upload", True,
+                                      "Content uploaded and registered on blockchain with free user experience", {
+                                          "content_id": result.get("content_id"),
+                                          "ipfs_hash": ipfs_hash,
+                                          "blockchain_tx": blockchain_tx,
+                                          "encryption_enabled": result.get("encryption_enabled"),
+                                          "user_cost": fee_info.get("user_cost"),
+                                          "paid_by": fee_info.get("paid_by"),
+                                          "access_url": result.get("access_url")
+                                      })
+                    else:
+                        self.log_result("Blockchain Content Upload", False,
+                                      "Content upload failed or incorrect fee model", result)
+                else:
+                    error_text = await response.text()
+                    self.log_result("Blockchain Content Upload", False, f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            self.log_result("Blockchain Content Upload", False, f"Error: {str(e)}")
+    
+    async def test_blockchain_messaging(self):
+        """Test blockchain-verified secure messaging"""
+        try:
+            message_data = {
+                "sender_email": "alice@privachain.com",
+                "recipient_email": "bob@privachain.com",
+                "message": "This is a blockchain-verified secure message"
+            }
+            
+            async with self.session.post(f"{BASE_URL}/blockchain/messages/send", json=message_data) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    
+                    success = result.get("success", False)
+                    blockchain_tx = result.get("blockchain_tx")
+                    message_id = result.get("message_id")
+                    fee_info = result.get("fee_info", {})
+                    
+                    if success and blockchain_tx and message_id and fee_info.get("user_cost") == "FREE":
+                        self.log_result("Blockchain Messaging", True,
+                                      "Secure message sent and verified on blockchain with free user experience", {
+                                          "message_id": message_id,
+                                          "sender_email": result.get("sender_email"),
+                                          "recipient_email": result.get("recipient_email"),
+                                          "blockchain_tx": blockchain_tx,
+                                          "encryption": result.get("encryption"),
+                                          "user_cost": fee_info.get("user_cost"),
+                                          "paid_by": fee_info.get("paid_by"),
+                                          "delivery_status": result.get("delivery_status")
+                                      })
+                    else:
+                        self.log_result("Blockchain Messaging", False,
+                                      "Blockchain messaging failed or incorrect fee model", result)
+                else:
+                    error_text = await response.text()
+                    self.log_result("Blockchain Messaging", False, f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            self.log_result("Blockchain Messaging", False, f"Error: {str(e)}")
+    
+    async def test_enhanced_privacy_status(self):
+        """Test enhanced privacy status with all features"""
+        try:
+            async with self.session.get(f"{BASE_URL}/privacy/status") as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    privacy_by_default = data.get("privacy_by_default", False)
+                    status = data.get("status", {})
+                    features_enabled = data.get("features_enabled", [])
+                    
+                    # Check for comprehensive privacy features
+                    expected_features = [
+                        "TOR routing",
+                        "DPI bypass",
+                        "Zero-Knowledge proofs",
+                        "IPFS content encryption",
+                        "Anonymous identity generation"
+                    ]
+                    
+                    features_present = all(
+                        any(expected in feature for feature in features_enabled)
+                        for expected in expected_features
+                    )
+                    
+                    if privacy_by_default and features_present and len(features_enabled) >= 5:
+                        self.log_result("Enhanced Privacy Status", True,
+                                      "All comprehensive privacy features enabled by default", {
+                                          "privacy_by_default": privacy_by_default,
+                                          "features_count": len(features_enabled),
+                                          "tor_available": status.get("tor_available"),
+                                          "ipfs_encryption": status.get("ipfs_encryption"),
+                                          "zk_proofs": status.get("zk_proofs"),
+                                          "dpi_bypass": status.get("dpi_bypass"),
+                                          "all_features": features_enabled
+                                      })
+                    else:
+                        self.log_result("Enhanced Privacy Status", False,
+                                      "Not all privacy features properly enabled", {
+                                          "privacy_by_default": privacy_by_default,
+                                          "features_count": len(features_enabled),
+                                          "features_enabled": features_enabled
+                                      })
+                else:
+                    error_text = await response.text()
+                    self.log_result("Enhanced Privacy Status", False, f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            self.log_result("Enhanced Privacy Status", False, f"Error: {str(e)}")
+    
+    async def test_content_resolution_with_blockchain(self):
+        """Test content resolution with blockchain integration for .prv domains"""
+        try:
+            # Test .prv domain resolution with blockchain integration
+            test_prv_url = "test-domain.prv"
+            payload = {"url": test_prv_url, "content_type": "auto"}
+            
+            async with self.session.post(f"{BASE_URL}/content/resolve", json=payload) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    source = data.get("source")
+                    blockchain_info = data.get("blockchain_info", {})
+                    privacy_features = data.get("privacy_features", {})
+                    
+                    if source == "prv":
+                        # Check for blockchain integration features
+                        has_blockchain_features = (
+                            privacy_features.get("blockchain_verified") or
+                            privacy_features.get("cosmos_secured") or
+                            data.get("available_for_registration") or
+                            blockchain_info.get("blockchain_verified")
+                        )
+                        
+                        if has_blockchain_features:
+                            self.log_result("Content Resolution with Blockchain", True,
+                                          "PRV domain resolution includes blockchain integration", {
+                                              "source": source,
+                                              "domain": data.get("domain"),
+                                              "blockchain_verified": blockchain_info.get("blockchain_verified"),
+                                              "cosmos_secured": privacy_features.get("cosmos_secured"),
+                                              "available_for_registration": data.get("available_for_registration"),
+                                              "registration_info": data.get("registration_info", {})
+                                          })
+                        else:
+                            self.log_result("Content Resolution with Blockchain", False,
+                                          "PRV domain missing blockchain integration features", data)
+                    else:
+                        self.log_result("Content Resolution with Blockchain", False,
+                                      f"Unexpected source type: {source}", data)
+                else:
+                    error_text = await response.text()
+                    self.log_result("Content Resolution with Blockchain", False, f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            self.log_result("Content Resolution with Blockchain", False, f"Error: {str(e)}")
+    
     async def run_all_tests(self):
         """Run all backend tests including comprehensive privacy features"""
         print("🚀 Starting PrivaChain Decentral Backend API Tests with Privacy Features")
