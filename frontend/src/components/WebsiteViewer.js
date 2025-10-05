@@ -114,6 +114,12 @@ const WebsiteViewer = ({ url }) => {
     return blockedDomains.some(domain => url.includes(domain));
   };
 
+  const useServerRendering = () => {
+    setUseServerBrowser(true);
+    setLoadingState('success');
+    toast.success('Switching to server-side browser rendering...');
+  };
+
   if (loadingState === 'loading') {
     return (
       <div className="flex-1 flex flex-col">
