@@ -230,7 +230,9 @@ content_resolver = ContentResolver()
 @app.on_event("startup")
 async def startup_event():
     from services.cosmos_service import cosmos_service
+    from services.browser_service import browser_service
     await cosmos_service.initialize()
+    await browser_service.initialize()
 
 # Routes
 @api_router.get("/")
