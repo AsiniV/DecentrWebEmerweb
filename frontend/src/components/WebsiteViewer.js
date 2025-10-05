@@ -174,6 +174,15 @@ const WebsiteViewer = ({ url }) => {
                 </Button>
                 
                 <Button 
+                  onClick={useServerRendering} 
+                  className="w-full" 
+                  size="sm"
+                >
+                  <Monitor className="w-4 h-4 mr-2" />
+                  Use Server Browser
+                </Button>
+                
+                <Button 
                   onClick={tryProxyLoad} 
                   variant="outline" 
                   className="w-full" 
