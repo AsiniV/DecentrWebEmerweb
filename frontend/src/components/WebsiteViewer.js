@@ -65,15 +65,25 @@ const WebsiteViewer = ({ url }) => {
     setLoadingState('loading');
     
     try {
-      // Use our backend proxy to bypass X-Frame-Options
-      const proxyEndpoint = `${BACKEND_URL}/api/proxy?url=${encodeURIComponent(url)}`;
-      setProxyUrl(proxyEndpoint);
-      setLoadingState('success');
-      toast.success('Loading via decentralized proxy...');
+      // Fetch content via our backend proxy
+      const response = await fetch(`${BACKEND_URL}/api/proxy?url=${encodeURIComponent(url)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Create a blob URL with the proxied content
+        const blob = new Blob([data.content], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        setProxyUrl(blobUrl);
+        setLoadingState('success');
+        toast.success('Loaded via decentralized proxy!');
+      } else {
+        throw new Error(`Proxy request failed: ${response.status}`);
+      }
     } catch (error) {
       console.error('Proxy load failed:', error);
       setLoadingState('error');
-      toast.error('Proxy loading failed');
+      toast.error('Proxy loading failed: ' + error.message);
     }
   };
 
