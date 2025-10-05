@@ -188,9 +188,11 @@ const WebsiteViewer = ({ url }) => {
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p className="text-xs text-blue-700">
-                  <strong>Pro Tip:</strong> For unrestricted access, try sites like:
-                  <br />• wikipedia.org • archive.org • example.com
-                  <br />• Most personal websites and blogs
+                  <strong>Why is this blocked?</strong> Major sites like Google, Facebook, Twitter block iframe embedding for security.
+                  <br /><br />
+                  <strong>✅ Sites that work:</strong> wikipedia.org, archive.org, most blogs
+                  <br />
+                  <strong>❌ Often blocked:</strong> google.com, youtube.com, facebook.com, twitter.com
                 </p>
               </div>
             </CardContent>
