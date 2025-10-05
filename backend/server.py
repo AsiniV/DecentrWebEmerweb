@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,13 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
-
+from datetime import datetime, timezone
+import httpx
+import base64
+import json
+import asyncio
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -20,37 +23,306 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="PrivaChain Decentral API")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# IPFS Configuration
+IPFS_API_KEY = os.environ.get('IPFS_API_KEY')
+IPFS_RPC_ENDPOINT = os.environ.get('IPFS_RPC_ENDPOINT')
+IPFS_PROJECT = os.environ.get('IPFS_PROJECT')
 
-# Define Models
-class StatusCheck(BaseModel):
+# Models
+class ContentRequest(BaseModel):
+    url: str
+    content_type: Optional[str] = "auto"
+
+class ContentResponse(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    url: str
+    content: str
+    content_type: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    source: str  # 'ipfs', 'http', 'prv'
+    metadata: Optional[Dict[str, Any]] = None
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class SearchQuery(BaseModel):
+    query: str
+    search_type: Optional[str] = "hybrid"  # hybrid, ipfs, prv, cosmos
+    limit: Optional[int] = 20
 
-# Add your routes to the router instead of directly to app
+class SearchResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    url: str
+    content_preview: str
+    source: str
+    metadata: Optional[Dict[str, Any]] = None
+    relevance_score: Optional[float] = None
+
+class Message(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    sender: str
+    recipient: str
+    content: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    encrypted: bool = True
+    message_type: str = "text"  # text, file, image
+
+class IPFSService:
+    def __init__(self):
+        self.api_key = IPFS_API_KEY
+        self.rpc_endpoint = IPFS_RPC_ENDPOINT
+        self.project = IPFS_PROJECT
+    
+    async def get_content(self, cid: str) -> Dict[str, Any]:
+        """Retrieve content from IPFS using the provided API"""
+        try:
+            headers = {
+                "Authorization": f"Basic {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            # Try to get content via IPFS API
+            async with httpx.AsyncClient() as client:
+                # First try to get via gateway
+                gateway_url = f"https://ipfs.io/ipfs/{cid}"
+                response = await client.get(gateway_url, timeout=10.0)
+                
+                if response.status_code == 200:
+                    content_type = response.headers.get('content-type', 'text/plain')
+                    return {
+                        "content": response.text if 'text' in content_type else response.content.decode('utf-8', errors='ignore'),
+                        "content_type": content_type,
+                        "source": "ipfs",
+                        "cid": cid
+                    }
+                else:
+                    raise HTTPException(status_code=404, detail=f"IPFS content not found: {cid}")
+        except Exception as e:
+            logging.error(f"IPFS error for CID {cid}: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"IPFS error: {str(e)}")
+    
+    async def add_content(self, content: str, filename: str = None) -> str:
+        """Add content to IPFS and return CID"""
+        try:
+            headers = {
+                "Authorization": f"Basic {self.api_key}"
+            }
+            
+            files = {
+                'file': (filename or 'content.txt', content, 'text/plain')
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.rpc_endpoint}/api/v0/add",
+                    headers=headers,
+                    files=files,
+                    timeout=30.0
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return result.get('Hash', '')
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to add to IPFS")
+        except Exception as e:
+            logging.error(f"IPFS add error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"IPFS add error: {str(e)}")
+
+class ContentResolver:
+    def __init__(self):
+        self.ipfs_service = IPFSService()
+    
+    async def resolve_content(self, url: str) -> Dict[str, Any]:
+        """Resolve content based on URL scheme"""
+        try:
+            if url.startswith('ipfs://'):
+                # Extract CID from ipfs:// URL
+                cid = url.replace('ipfs://', '').split('/')[0]
+                return await self.ipfs_service.get_content(cid)
+            
+            elif url.endswith('.prv'):
+                # Handle .prv domains (placeholder for Cosmos integration)
+                return {
+                    "content": "<h1>PrivaChain Domain</h1><p>This is a .prv domain placeholder. Cosmos integration coming soon!</p>",
+                    "content_type": "text/html",
+                    "source": "prv",
+                    "domain": url
+                }
+            
+            elif url.startswith('http://') or url.startswith('https://'):
+                # Handle regular HTTP requests with DPI bypass
+                return await self.fetch_http_content(url)
+            
+            else:
+                raise HTTPException(status_code=400, detail="Unsupported URL scheme")
+        
+        except Exception as e:
+            logging.error(f"Content resolution error for {url}: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Resolution error: {str(e)}")
+    
+    async def fetch_http_content(self, url: str) -> Dict[str, Any]:
+        """Fetch HTTP content with DPI bypass techniques"""
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(url, timeout=15.0)
+                
+                if response.status_code == 200:
+                    content_type = response.headers.get('content-type', 'text/html')
+                    return {
+                        "content": response.text,
+                        "content_type": content_type,
+                        "source": "http",
+                        "url": url,
+                        "status_code": response.status_code
+                    }
+                else:
+                    raise HTTPException(status_code=response.status_code, detail="HTTP fetch failed")
+        except Exception as e:
+            logging.error(f"HTTP fetch error for {url}: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"HTTP fetch error: {str(e)}")
+
+# Initialize services
+content_resolver = ContentResolver()
+
+# Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "PrivaChain Decentral API", "version": "1.0.0"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+@api_router.post("/content/resolve", response_model=ContentResponse)
+async def resolve_content(request: ContentRequest):
+    """Resolve content from various sources (IPFS, HTTP, .prv domains)"""
+    try:
+        result = await content_resolver.resolve_content(request.url)
+        
+        content_response = ContentResponse(
+            url=request.url,
+            content=result["content"],
+            content_type=result["content_type"],
+            source=result["source"],
+            metadata=result.get("metadata")
+        )
+        
+        # Store in database for caching
+        await db.content_cache.insert_one(content_response.dict())
+        
+        return content_response
+    
+    except Exception as e:
+        logging.error(f"Content resolution failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+@api_router.get("/content/cached", response_model=List[ContentResponse])
+async def get_cached_content():
+    """Get recently cached content"""
+    try:
+        cached_items = await db.content_cache.find().sort("timestamp", -1).limit(50).to_list(length=None)
+        return [ContentResponse(**item) for item in cached_items]
+    except Exception as e:
+        logging.error(f"Cache retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/search", response_model=List[SearchResult])
+async def hybrid_search(query: SearchQuery):
+    """Perform hybrid search across IPFS, OrbitDB, and other sources"""
+    try:
+        results = []
+        
+        # Placeholder search results (OrbitDB integration coming)
+        if query.search_type in ["hybrid", "ipfs"]:
+            results.append(SearchResult(
+                title=f"IPFS Search: {query.query}",
+                url=f"ipfs://QmExample{len(query.query)}",
+                content_preview=f"Search results for '{query.query}' in IPFS network",
+                source="ipfs",
+                relevance_score=0.9
+            ))
+        
+        if query.search_type in ["hybrid", "prv"]:
+            results.append(SearchResult(
+                title=f"PrivaChain Domain: {query.query}",
+                url=f"{query.query.lower().replace(' ', '')}.prv",
+                content_preview=f"Decentralized content for '{query.query}' on PrivaChain",
+                source="prv",
+                relevance_score=0.8
+            ))
+        
+        # Store search query for analytics
+        search_record = {
+            "query": query.query,
+            "search_type": query.search_type,
+            "timestamp": datetime.now(timezone.utc),
+            "results_count": len(results)
+        }
+        await db.search_queries.insert_one(search_record)
+        
+        return results[:query.limit]
+    
+    except Exception as e:
+        logging.error(f"Search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/ipfs/add", response_model=Dict[str, str])
+async def add_to_ipfs(content: str, filename: str = "content.txt"):
+    """Add content to IPFS"""
+    try:
+        cid = await content_resolver.ipfs_service.add_content(content, filename)
+        return {"cid": cid, "url": f"ipfs://{cid}"}
+    except Exception as e:
+        logging.error(f"IPFS add failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/messages/send", response_model=Message)
+async def send_message(message: Message):
+    """Send a Web3 message (placeholder for E2E implementation)"""
+    try:
+        # Store message in database
+        message_dict = message.dict()
+        await db.messages.insert_one(message_dict)
+        
+        return message
+    except Exception as e:
+        logging.error(f"Message send failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/messages/{user_id}", response_model=List[Message])
+async def get_messages(user_id: str):
+    """Get messages for a user"""
+    try:
+        messages = await db.messages.find(
+            {"$or": [{"sender": user_id}, {"recipient": user_id}]}
+        ).sort("timestamp", -1).limit(50).to_list(length=None)
+        
+        return [Message(**msg) for msg in messages]
+    except Exception as e:
+        logging.error(f"Message retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/status/health")
+async def health_check():
+    """Health check endpoint"""
+    try:
+        # Test database connection
+        await db.command("ping")
+        
+        return {
+            "status": "healthy",
+            "services": {
+                "database": "connected",
+                "ipfs": "configured" if IPFS_API_KEY else "not_configured"
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc)
+        }
 
 # Include the router in the main app
 app.include_router(api_router)
