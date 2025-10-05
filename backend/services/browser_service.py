@@ -62,7 +62,9 @@ class BrowserRenderingService:
                     '--enable-web-components',
                     '--enable-features=WebAssembly',
                     '--allow-running-insecure-content',
-                    '--disable-blink-features=AutomationControlled'
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-gpu',
+                    '--remote-debugging-port=0'
                 ]
             )
             
@@ -76,6 +78,8 @@ class BrowserRenderingService:
             
         except Exception as e:
             logger.error(f"Failed to initialize browser service: {str(e)}")
+            # Don't fail the entire application if browser service fails to initialize
+            self.is_running = False
             return False
     
     async def create_session(self) -> str:
