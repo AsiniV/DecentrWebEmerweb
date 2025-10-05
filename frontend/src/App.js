@@ -417,6 +417,7 @@ const PrivaChainBrowser = () => {
                 size="sm" 
                 onClick={() => navigateToUrl(addressBar)}
                 disabled={loading}
+                title="Reload"
               >
                 <RotateCcw className="w-4 h-4" />
               </Button>
@@ -434,6 +435,30 @@ const PrivaChainBrowser = () => {
             <Button type="submit" disabled={loading} data-testid="navigate-btn">
               {loading ? <RotateCcw className="w-4 h-4 animate-spin" /> : 'Go'}
             </Button>
+
+            {/* Quick Access Buttons */}
+            <div className="flex items-center gap-1 border-l pl-2 ml-2">
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigateToUrl('https://figma.com')}
+                title="Open Figma"
+                className="text-xs px-2"
+              >
+                Figma
+              </Button>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigateToUrl('https://google.com')}
+                title="Open Google"
+                className="text-xs px-2"
+              >
+                Google
+              </Button>
+            </div>
           </form>
         </div>
       </div>
