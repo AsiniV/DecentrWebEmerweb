@@ -231,6 +231,13 @@ content_resolver = ContentResolver()
 async def startup_event():
     from services.cosmos_service import cosmos_service
     from services.working_browser_service import working_browser_service
+    from services.privacy_service import privacy_service
+    
+    # Initialize privacy services first (they're foundational)
+    privacy_initialized = await privacy_service.initialize()
+    if privacy_initialized:
+        logger.info("✅ ALL PRIVACY FEATURES ENABLED BY DEFAULT")
+    
     await cosmos_service.initialize()
     await working_browser_service.initialize()
 
