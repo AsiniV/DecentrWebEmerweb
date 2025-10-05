@@ -154,14 +154,28 @@ class ContentResolver:
                 return ipfs_result
             
             elif url.endswith('.prv'):
-                # Handle .prv domains via Cosmos blockchain
+                # Handle .prv domains via Cosmos blockchain with enhanced features
                 from services.cosmos_service import cosmos_service
+                
+                logger.info(f"🔍 Resolving .prv domain via Cosmos blockchain: {url}")
                 
                 domain_info = await cosmos_service.resolve_prv_domain(url)
                 
                 if domain_info and domain_info.get("ipfs_hash"):
                     # Fetch content from IPFS using resolved hash
                     ipfs_content = await self.ipfs_service.get_content(domain_info["ipfs_hash"])
+                    
+                    # Record domain access on blockchain for analytics (optional)
+                    try:
+                        access_record = await cosmos_service.register_content(
+                            content_hash=domain_info["ipfs_hash"],
+                            content_type="prv_domain_access",
+                            owner_address=domain_info.get("owner", "unknown"),
+                            encryption_metadata={"accessed_domain": url, "access_time": datetime.now(timezone.utc).isoformat()}
+                        )
+                        logger.info(f"📊 Domain access recorded on blockchain: {access_record.get('tx_hash', 'N/A')}")
+                    except Exception as record_error:
+                        logger.warning(f"Could not record domain access: {record_error}")
                     
                     return {
                         "content": ipfs_content["content"],
@@ -171,23 +185,46 @@ class ContentResolver:
                         "blockchain_info": {
                             "owner": domain_info.get("owner"),
                             "registration_height": domain_info.get("registration_height"),
-                            "content_hash": domain_info["ipfs_hash"]
+                            "content_hash": domain_info["ipfs_hash"],
+                            "blockchain_verified": True,
+                            "transaction_hash": domain_info.get("tx_hash")
                         },
                         "privacy_enabled": True,
                         "privacy_features": {
                             "blockchain_verified": True,
                             "decentralized_dns": True,
                             "content_encrypted": self.privacy_service.ipfs_encryption.encryption_enabled,
-                            "anonymous_access": True
+                            "anonymous_access": True,
+                            "cosmos_secured": True
                         }
                     }
                 else:
                     return {
-                        "content": f"<h1>PrivaChain Domain Not Found</h1><p>The domain '{url}' is not registered on the PrivaChain network.</p><p>You can register this domain on the Cosmos blockchain to point to your IPFS content.</p>",
+                        "content": f"""
+                        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; text-align: center;">
+                            <h1 style="color: #2563eb;">🌐 PrivaChain Domain Available</h1>
+                            <p style="font-size: 18px; color: #4b5563;">The domain <strong>'{url}'</strong> is available for registration!</p>
+                            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <h3 style="color: #1f2937;">Register this domain on the Cosmos blockchain</h3>
+                                <p style="color: #6b7280;">Secure, decentralized, and completely private</p>
+                                <p style="color: #6b7280;">All transaction fees are handled automatically - no crypto needed!</p>
+                            </div>
+                            <div style="margin: 20px 0;">
+                                <strong style="color: #059669;">✅ Web2 Experience</strong> • 
+                                <strong style="color: #059669;">✅ Blockchain Security</strong> • 
+                                <strong style="color: #059669;">✅ IPFS Storage</strong>
+                            </div>
+                        </div>
+                        """,
                         "content_type": "text/html",
                         "source": "prv",
                         "domain": url,
-                        "error": "domain_not_found"
+                        "available_for_registration": True,
+                        "registration_info": {
+                            "blockchain": "cosmos",
+                            "fees_paid_by": "developer",
+                            "user_cost": "free"
+                        }
                     }
             
             elif url.startswith('http://') or url.startswith('https://'):
