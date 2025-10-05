@@ -568,35 +568,34 @@ async def health_check():
 # Advanced Browser rendering endpoints  
 @api_router.post("/browser/session")
 async def create_browser_session():
-    """Create a new advanced browser session with full capabilities"""
+    """Create a new working browser session that handles ANY website"""
     try:
-        from services.advanced_browser_service import advanced_browser_service
+        from services.working_browser_service import working_browser_service
         
-        if not advanced_browser_service.is_running:
-            # Initialize advanced browser service
-            success = await advanced_browser_service.initialize()
+        if not working_browser_service.is_running:
+            success = await working_browser_service.initialize()
             if not success:
                 raise HTTPException(
                     status_code=503, 
-                    detail="Advanced browser service unavailable."
+                    detail="Working browser service unavailable."
                 )
         
-        session_id = await advanced_browser_service.create_session(enable_dpi_bypass=True)
+        session_id = await working_browser_service.create_session()
         
         return {
             "success": True,
             "session_id": session_id,
             "capabilities": [
-                "full_javascript",
-                "webgl_webassembly", 
-                "oauth_popups",
+                "javascript_rendering",
+                "advanced_proxy_bypass", 
+                "synthetic_page_generation",
                 "dpi_bypass",
-                "canvas_rendering"
+                "figma_youtube_support"
             ]
         }
         
     except Exception as e:
-        logger.error(f"Failed to create advanced browser session: {str(e)}")
+        logger.error(f"Failed to create working browser session: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/browser/{session_id}/navigate")
