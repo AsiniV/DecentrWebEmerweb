@@ -244,6 +244,10 @@ class ContentResolver:
         except Exception as e:
             logging.error(f"HTTP fetch error for {url}: {str(e)}")
             raise HTTPException(status_code=500, detail=f"HTTP fetch error: {str(e)}")
+    
+    def get_privacy_status(self) -> Dict[str, Any]:
+        """Get privacy status for content resolution"""
+        return self.privacy_service.get_privacy_status()
 
 # Initialize services
 content_resolver = ContentResolver()
