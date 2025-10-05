@@ -167,20 +167,37 @@ class ContentResolver:
     async def fetch_http_content(self, url: str) -> Dict[str, Any]:
         """Fetch HTTP content with DPI bypass techniques"""
         try:
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                response = await client.get(url, timeout=15.0)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1'
+            }
+            
+            async with httpx.AsyncClient(
+                follow_redirects=True,
+                timeout=30.0,
+                headers=headers
+            ) as client:
+                response = await client.get(url)
                 
                 if response.status_code == 200:
                     content_type = response.headers.get('content-type', 'text/html')
+                    
+                    # For complex web apps, we'll let the frontend handle them via iframe
+                    # This endpoint is mainly for IPFS and simple content now
                     return {
                         "content": response.text,
                         "content_type": content_type,
                         "source": "http",
-                        "url": url,
-                        "status_code": response.status_code
+                        "url": str(response.url),  # Use final URL after redirects
+                        "status_code": response.status_code,
+                        "headers": dict(response.headers)
                     }
                 else:
-                    raise HTTPException(status_code=response.status_code, detail="HTTP fetch failed")
+                    raise HTTPException(status_code=response.status_code, detail=f"HTTP fetch failed: {response.status_code}")
         except Exception as e:
             logging.error(f"HTTP fetch error for {url}: {str(e)}")
             raise HTTPException(status_code=500, detail=f"HTTP fetch error: {str(e)}")
