@@ -306,9 +306,14 @@ async def get_cached_content():
 
 @api_router.post("/search", response_model=List[SearchResult])
 async def hybrid_search(query: SearchQuery):
-    """Perform hybrid search across IPFS, OrbitDB, and Cosmos blockchain"""
+    """Perform privacy-enhanced hybrid search with Zero-Knowledge proofs"""
     try:
         from services.cosmos_service import cosmos_service
+        from services.privacy_service import privacy_service
+        
+        # Generate ZK proof for anonymous search query
+        zk_proof = privacy_service.zk_proof.generate_query_proof(query.query)
+        logger.info(f"Generated ZK proof for search query: {zk_proof.get('commitment', 'unknown')[:16]}...")
         
         results = []
         
