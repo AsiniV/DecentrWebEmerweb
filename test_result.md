@@ -278,10 +278,12 @@ metadata:
   run_ui: false
   backend_testing_completed: true
   backend_test_success_rate: "100%"
-  backend_tests_passed: 31
-  backend_tests_total: 31
+  backend_tests_passed: 37
+  backend_tests_total: 37
   privacy_features_tested: true
   privacy_test_success_rate: "100%"
+  blockchain_integration_tested: true
+  blockchain_test_success_rate: "100%"
 
 test_plan:
   current_focus:
@@ -299,6 +301,12 @@ test_plan:
     - "E2E Encrypted Messaging (automatic encryption/decryption)" - ✅ PASSED
     - "Encrypted IPFS Storage (encryption by default)" - ✅ PASSED
     - "Health Check with Privacy Services" - ✅ PASSED
+    - "Cosmos Blockchain Status (/api/blockchain/status)" - ✅ PASSED
+    - "Blockchain Domain Registration (/api/blockchain/domains/register)" - ✅ PASSED
+    - "Blockchain Content Upload (/api/blockchain/content/upload)" - ✅ PASSED
+    - "Blockchain Messaging (/api/blockchain/messages/send)" - ✅ PASSED
+    - "Enhanced Privacy Status with All Features" - ✅ PASSED
+    - "Content Resolution with Blockchain Integration" - ✅ PASSED
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
