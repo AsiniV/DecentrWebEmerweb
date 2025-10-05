@@ -670,12 +670,31 @@ async def close_browser_session(session_id: str):
         logger.error(f"Advanced session closure failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@api_router.post("/browser/{session_id}/oauth")
+async def handle_oauth_popup(session_id: str, credentials: Dict[str, str]):
+    """Handle OAuth popup login (Gmail, Facebook, etc.)"""
+    try:
+        from services.advanced_browser_service import advanced_browser_service
+        result = await advanced_browser_service.handle_oauth_popup(session_id, credentials)
+        return result
+        
+    except Exception as e:
+        logger.error(f"OAuth popup handling failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/browser/sessions")
 async def list_browser_sessions():
     """List all active browser sessions"""
     try:
-        from services.browser_service import browser_service
-        sessions = browser_service.get_all_sessions()
+        from services.advanced_browser_service import advanced_browser_service
+        sessions = []
+        for session_id, session in advanced_browser_service.sessions.items():
+            sessions.append({
+                'session_id': session_id,
+                'current_url': session.current_url,
+                'last_activity': session.last_activity.isoformat(),
+                'popup_count': len(session.popup_windows)
+            })
         
         return {"sessions": sessions}
         
