@@ -42,8 +42,8 @@ const BrowserTab = ({ tab, isActive, onClick, onClose }) => {
 };
 
 // Content Viewer Component
-const ContentViewer = ({ content, contentType, url }) => {
-  if (!content) {
+const ContentViewer = ({ content, contentType, url, source }) => {
+  if (!content && !url) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
         <div className="text-center">
@@ -54,25 +54,84 @@ const ContentViewer = ({ content, contentType, url }) => {
     );
   }
 
-  if (contentType?.includes('html')) {
+  // For HTTP/HTTPS websites, use iframe for full browser engine support
+  if (source === 'http' && (url?.startsWith('http://') || url?.startsWith('https://'))) {
     return (
-      <div className="flex-1 p-4 overflow-auto">
-        <div 
-          className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
+      <div className="flex-1 flex flex-col">
+        <div className="bg-white border-b px-4 py-2 flex items-center gap-2">
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            {source?.toUpperCase()}
+          </Badge>
+          <span className="text-sm text-gray-600 truncate">{url}</span>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => window.open(url, '_blank')}
+            className="ml-auto"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </Button>
+        </div>
+        <iframe
+          src={url}
+          className="flex-1 w-full border-0"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
+          title={`Web content: ${url}`}
+          onLoad={() => console.log('Website loaded successfully')}
+          onError={() => console.error('Failed to load website')}
         />
       </div>
     );
   }
 
-  return (
-    <div className="flex-1 p-4 overflow-auto">
-      <div className="bg-gray-50 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="outline">{contentType || 'text/plain'}</Badge>
-          <span className="text-sm text-gray-500">{url}</span>
+  // For IPFS and .prv content, use the existing content viewer
+  if (contentType?.includes('html') && source !== 'http') {
+    return (
+      <div className="flex-1 flex flex-col">
+        <div className="bg-white border-b px-4 py-2 flex items-center gap-2">
+          <Badge 
+            variant="outline" 
+            className={
+              source === 'ipfs' 
+                ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                : 'bg-green-50 text-green-700 border-green-200'
+            }
+          >
+            {source?.toUpperCase()}
+          </Badge>
+          <span className="text-sm text-gray-600 truncate">{url}</span>
         </div>
-        <pre className="whitespace-pre-wrap text-sm">{content}</pre>
+        <div className="flex-1 p-4 overflow-auto">
+          <div 
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // For plain text and other IPFS content
+  return (
+    <div className="flex-1 flex flex-col">
+      <div className="bg-white border-b px-4 py-2 flex items-center gap-2">
+        <Badge 
+          variant="outline" 
+          className={
+            source === 'ipfs' 
+              ? 'bg-blue-50 text-blue-700 border-blue-200' 
+              : 'bg-green-50 text-green-700 border-green-200'
+          }
+        >
+          {source?.toUpperCase()}
+        </Badge>
+        <Badge variant="outline">{contentType || 'text/plain'}</Badge>
+        <span className="text-sm text-gray-600 truncate">{url}</span>
+      </div>
+      <div className="flex-1 p-4 overflow-auto">
+        <div className="bg-gray-50 rounded-lg p-4">
+          <pre className="whitespace-pre-wrap text-sm font-mono">{content}</pre>
+        </div>
       </div>
     </div>
   );
