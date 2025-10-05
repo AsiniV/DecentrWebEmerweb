@@ -9,13 +9,14 @@ class MessagingService {
     this.conversations = new Map(); // contactId -> conversation
     this.messageListeners = new Set();
     this.statusListeners = new Set();
+    this.privacyEnabled = true;
   }
 
   // Initialize P2P messaging (browser-compatible WebRTC implementation)
   async initialize() {
     try {
-      // Initialize crypto service first
-      cryptoService.initialize();
+      // Initialize enhanced crypto service with all privacy features
+      enhancedCryptoService.initialize();
 
       // Create browser-based P2P node using WebRTC
       this.libp2p = {
