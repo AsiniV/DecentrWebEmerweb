@@ -884,17 +884,26 @@ class PrivaChainTester:
             self.log_result("Content Resolution with Blockchain", False, f"Error: {str(e)}")
     
     async def run_all_tests(self):
-        """Run all backend tests including comprehensive privacy features"""
-        print("🚀 Starting PrivaChain Decentral Backend API Tests with Privacy Features")
-        print("=" * 70)
+        """Run all backend tests including comprehensive privacy features and blockchain integration"""
+        print("🚀 Starting PrivaChain Decentral Backend API Tests with Blockchain Integration")
+        print("=" * 80)
         print()
         
         # Basic connectivity tests
         await self.test_health_check()
         await self.test_root_endpoint()
         
-        # PRIVACY FEATURE TESTS (NEW)
-        print("🔒 Testing Privacy Features...")
+        # NEW BLOCKCHAIN INTEGRATION TESTS
+        print("⛓️  Testing Cosmos Blockchain Integration...")
+        await self.test_blockchain_status()
+        await self.test_blockchain_domain_registration()
+        await self.test_blockchain_content_upload()
+        await self.test_blockchain_messaging()
+        await self.test_content_resolution_with_blockchain()
+        
+        # ENHANCED PRIVACY FEATURE TESTS
+        print("🔒 Testing Enhanced Privacy Features...")
+        await self.test_enhanced_privacy_status()
         await self.test_privacy_status()
         await self.test_health_check_privacy_services()
         await self.test_enhanced_content_resolution_privacy()
