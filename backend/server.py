@@ -135,6 +135,8 @@ class IPFSService:
 class ContentResolver:
     def __init__(self):
         self.ipfs_service = IPFSService()
+        from services.privacy_service import privacy_service
+        self.privacy_service = privacy_service
     
     async def resolve_content(self, url: str) -> Dict[str, Any]:
         """Resolve content based on URL scheme"""
