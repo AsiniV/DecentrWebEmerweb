@@ -629,14 +629,14 @@ async def interact_with_browser(session_id: str, action: Dict[str, Any]):
 
 @api_router.get("/browser/{session_id}/content")
 async def get_browser_content(session_id: str):
-    """Get current page content and screenshot with popup info"""
+    """Get current page content and screenshot"""
     try:
-        from services.advanced_browser_service import advanced_browser_service
-        result = await advanced_browser_service.get_page_content(session_id)
+        from services.working_browser_service import working_browser_service
+        result = await working_browser_service.get_page_content(session_id)
         return result
         
     except Exception as e:
-        logger.error(f"Advanced content retrieval failed: {str(e)}")
+        logger.error(f"Working browser content retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/browser/{session_id}/execute")
