@@ -11,40 +11,25 @@ class SearchService {
     this.indexingQueue = [];
   }
 
-  // Initialize OrbitDB and IPFS
+  // Initialize decentralized search (browser-compatible implementation)
   async initialize() {
     try {
       console.log('Initializing decentralized search service...');
 
-      // Connect to IPFS
-      this.ipfs = IPFS.create({
-        host: 'ipfs.io',
-        port: 443,
-        protocol: 'https'
-      });
-
-      // Initialize OrbitDB
-      this.orbitdb = await OrbitDB.createInstance(this.ipfs);
-
-      // Create search index database
-      this.searchDB = await this.orbitdb.docstore('privachain-search-index', {
-        accessController: {
-          write: ['*'] // Allow anyone to write (public index)
+      // Initialize browser-compatible IPFS client
+      this.ipfs = {
+        cat: async (cid) => {
+          // Use public IPFS gateway for content retrieval
+          const response = await fetch(`https://ipfs.io/ipfs/${cid}`);
+          if (!response.ok) throw new Error(`IPFS fetch failed: ${response.status}`);
+          const content = await response.text();
+          return [new TextEncoder().encode(content)];
         }
-      });
+      };
 
-      // Create content database for caching
-      this.contentDB = await this.orbitdb.docstore('privachain-content-cache', {
-        accessController: {
-          write: [this.orbitdb.identity.id] // Only we can write to our cache
-        }
-      });
-
-      // Load existing databases
-      await Promise.all([
-        this.searchDB.load(),
-        this.contentDB.load()
-      ]);
+      // Initialize local IndexedDB for search index (OrbitDB alternative)
+      this.searchDB = await this.initializeLocalDB('privachain-search-index');
+      this.contentDB = await this.initializeLocalDB('privachain-content-cache');
 
       this.isInitialized = true;
       console.log('Decentralized search service initialized');
@@ -58,6 +43,52 @@ class SearchService {
       this.isInitialized = false;
       return false;
     }
+  }
+
+  // Initialize IndexedDB for local storage
+  async initializeLocalDB(name) {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(name, 1);
+      
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        resolve({
+          query: (filter) => {
+            return new Promise((resolve) => {
+              const transaction = db.transaction(['documents'], 'readonly');
+              const store = transaction.objectStore('documents');
+              const getAllRequest = store.getAll();
+              
+              getAllRequest.onsuccess = () => {
+                const results = getAllRequest.result.filter(filter);
+                resolve(results);
+              };
+            });
+          },
+          put: (doc) => {
+            return new Promise((resolve, reject) => {
+              const transaction = db.transaction(['documents'], 'readwrite');
+              const store = transaction.objectStore('documents');
+              const request = store.put(doc);
+              
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+          },
+          address: { toString: () => `local-db-${name}` }
+        });
+      };
+      
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('documents')) {
+          const store = db.createObjectStore('documents', { keyPath: '_id' });
+          store.createIndex('content', 'content', { unique: false });
+          store.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+        }
+      };
+    });
   }
 
   // Search across decentralized index
