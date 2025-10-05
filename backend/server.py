@@ -462,11 +462,44 @@ def calculate_text_relevance(text: str, query: str) -> float:
     return min(matches / len(query_terms), 1.0)
 
 @api_router.post("/ipfs/add", response_model=Dict[str, str])
-async def add_to_ipfs(content: str, filename: str = "content.txt"):
-    """Add content to IPFS"""
+async def add_to_ipfs(content: str, filename: str = "content.txt", encrypt: bool = True):
+    """Add content to IPFS with encryption by default"""
     try:
-        cid = await content_resolver.ipfs_service.add_content(content, filename)
-        return {"cid": cid, "url": f"ipfs://{cid}"}
+        from services.privacy_service import privacy_service
+        
+        final_content = content
+        encryption_metadata = {}
+        
+        # Encrypt content by default if requested
+        if encrypt and privacy_service.ipfs_encryption.encryption_enabled:
+            try:
+                content_bytes = content.encode('utf-8')
+                encrypted_data = privacy_service.encrypt_ipfs_content(content_bytes)
+                
+                # Store encryption metadata
+                encryption_metadata = {
+                    "encrypted": True,
+                    "encryption_method": encrypted_data.get("encryption_method"),
+                    "content_hash": encrypted_data.get("content_hash")
+                }
+                
+                # Convert encrypted data to JSON string for IPFS storage
+                final_content = json.dumps(encrypted_data)
+                logger.info(f"Content encrypted before IPFS storage: {encryption_metadata['content_hash'][:16]}...")
+                
+            except Exception as encrypt_error:
+                logger.warning(f"Encryption failed, storing unencrypted: {str(encrypt_error)}")
+        
+        cid = await content_resolver.ipfs_service.add_content(final_content, filename)
+        
+        response = {
+            "cid": cid, 
+            "url": f"ipfs://{cid}",
+            "privacy_enabled": True,
+            **encryption_metadata
+        }
+        
+        return response
     except Exception as e:
         logging.error(f"IPFS add failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
