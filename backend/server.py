@@ -508,13 +508,36 @@ async def send_message(message: Message):
 
 @api_router.get("/messages/{user_id}", response_model=List[Message])
 async def get_messages(user_id: str):
-    """Get messages for a user"""
+    """Get messages for a user with automatic decryption"""
     try:
+        from services.privacy_service import privacy_service
+        
         messages = await db.messages.find(
             {"$or": [{"sender": user_id}, {"recipient": user_id}]}
         ).sort("timestamp", -1).limit(50).to_list(length=None)
         
-        return [Message(**msg) for msg in messages]
+        decrypted_messages = []
+        for msg_data in messages:
+            try:
+                # Decrypt message content if encrypted
+                if msg_data.get('encrypted', False):
+                    try:
+                        encrypted_data = json.loads(msg_data['content'])
+                        if isinstance(encrypted_data, dict) and 'encrypted_content' in encrypted_data:
+                            # Decrypt the content
+                            decrypted_content = privacy_service.decrypt_ipfs_content(encrypted_data)
+                            msg_data['content'] = decrypted_content.decode('utf-8')
+                    except (json.JSONDecodeError, ValueError, KeyError) as e:
+                        # If decryption fails, keep original content
+                        logger.warning(f"Failed to decrypt message {msg_data.get('id', 'unknown')}: {str(e)}")
+                
+                decrypted_messages.append(Message(**msg_data))
+            except Exception as msg_error:
+                logger.error(f"Error processing message: {str(msg_error)}")
+                # Add message anyway, even if decryption failed
+                decrypted_messages.append(Message(**msg_data))
+        
+        return decrypted_messages
     except Exception as e:
         logging.error(f"Message retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
