@@ -203,13 +203,13 @@ const WebsiteViewer = ({ url }) => {
                 </Button>
               </div>
 
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  <strong>Why is this blocked?</strong> Major sites like Google, Facebook, Twitter block iframe embedding for security.
-                  <br /><br />
-                  <strong>✅ Sites that work:</strong> wikipedia.org, archive.org, most blogs
+              <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                <p className="text-xs text-green-700">
+                  <strong>💡 Server Browser:</strong> Runs full Chromium on server with JavaScript, WebGL, OAuth popups
                   <br />
-                  <strong>❌ Often blocked:</strong> google.com, youtube.com, facebook.com, twitter.com
+                  <strong>🌐 Proxy:</strong> Basic HTML bypass for simpler sites
+                  <br />
+                  <strong>🆕 New Tab:</strong> Opens in your default browser with full features
                 </p>
               </div>
             </CardContent>
