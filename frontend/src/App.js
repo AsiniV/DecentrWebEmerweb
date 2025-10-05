@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Badge } from './components/ui/badge';
 import { toast, Toaster } from 'sonner';
+import MessengerView from './components/MessengerView';
+import { searchService } from './services/searchService';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
