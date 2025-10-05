@@ -584,15 +584,29 @@ const PrivaChainBrowser = () => {
 };
 
 function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<PrivaChainBrowser />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
+  try {
+    return (
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<PrivaChainBrowser />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    );
+  } catch (error) {
+    console.error('App error:', error);
+    return (
+      <div className="App">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">PrivaChain Decentral</h1>
+            <p className="text-red-600">An error occurred. Please refresh the page.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default App;
