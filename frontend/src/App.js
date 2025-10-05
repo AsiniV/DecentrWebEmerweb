@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Badge } from './components/ui/badge';
 import { toast, Toaster } from 'sonner';
 import MessengerView from './components/MessengerView';
+import WebsiteViewer from './components/WebsiteViewer';
 import { searchService } from './services/searchService';
 import './App.css';
 
