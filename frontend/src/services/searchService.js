@@ -138,13 +138,13 @@ class SearchService {
     }
   }
 
-  // Search in OrbitDB distributed index
+  // Search in local distributed index
   async searchOrbitDB(query, limit) {
     if (!this.searchDB) return [];
 
     try {
       const queryTerms = query.toLowerCase().split(' ');
-      const allDocs = this.searchDB.query(() => true);
+      const allDocs = await this.searchDB.query(() => true);
 
       const matchingDocs = allDocs.filter(doc => {
         const searchableText = [
@@ -157,7 +157,7 @@ class SearchService {
         return queryTerms.some(term => searchableText.includes(term));
       });
 
-      return matchingDocs.map(doc => ({
+      return matchingDocs.slice(0, limit).map(doc => ({
         id: doc._id || this.generateId(),
         title: doc.title || 'Untitled',
         url: doc.url || doc.cid ? `ipfs://${doc.cid}` : '#',
@@ -172,7 +172,7 @@ class SearchService {
         }
       }));
     } catch (error) {
-      console.error('OrbitDB search error:', error);
+      console.error('Local search error:', error);
       return [];
     }
   }
