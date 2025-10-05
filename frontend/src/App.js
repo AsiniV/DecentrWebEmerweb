@@ -393,6 +393,24 @@ const PrivaChainBrowser = () => {
     }
   }, [activeTabId, activeTab]);
 
+  useEffect(() => {
+    // Initialize decentralized services on app start
+    const initializeServices = async () => {
+      try {
+        // Initialize search service in background
+        searchService.initialize().then(() => {
+          console.log('Decentralized search service initialized');
+        }).catch((error) => {
+          console.warn('Search service initialization failed:', error);
+        });
+      } catch (error) {
+        console.error('Service initialization error:', error);
+      }
+    };
+
+    initializeServices();
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
